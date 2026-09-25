@@ -80,6 +80,8 @@ public class ImageScene extends Scene {
         // Bottom menu
         container.addElement(buildQuickMenu(width, height, scale));
 
+        setContainer(container);
+
         return container;
     }
 

@@ -88,6 +88,10 @@ public abstract class Scene {
         this.buildEventConsumer = buildEventConsumer;
     }
 
+    protected void setContainer(Container container) {
+        this.container = container;
+    }
+
     public abstract Container build();
 
     public abstract StageType getStageType();

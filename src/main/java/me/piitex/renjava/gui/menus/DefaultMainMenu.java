@@ -2,6 +2,7 @@ package me.piitex.renjava.gui.menus;
 
 import me.piitex.engine.ui.color.Color;
 import me.piitex.engine.ui.containers.Container;
+import me.piitex.engine.ui.containers.ResizableContainer;
 import me.piitex.engine.ui.layout.Layout;
 import me.piitex.engine.ui.layout.VerticalLayout;
 import me.piitex.engine.ui.overlays.ButtonOverlay;
@@ -21,10 +22,14 @@ public class DefaultMainMenu implements MainMenu {
 
     @Override
     public Container mainMenu(boolean rightClick) {
-        Container container = new Container(configuration.getWidth(), configuration.getHeight());
+        double width = renJava.getGameWindow().getWindowOptions().getWidth();
+        double height = renJava.getGameWindow().getWindowOptions().getWidth();
+        Container container = new ResizableContainer(width, height);
 
         // Background image
         ImageOverlay background = new ImageOverlay(new File(renJava.getGuiDirectory(), "main_menu.png"));
+        background.setWidth(width);
+        background.setHeight(height);
         container.addElement(background);
 
         VerticalLayout layout = new VerticalLayout(600, 200);

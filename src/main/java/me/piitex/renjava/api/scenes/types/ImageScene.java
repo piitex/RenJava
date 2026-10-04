@@ -2,14 +2,13 @@ package me.piitex.renjava.api.scenes.types;
 
 import me.piitex.engine.ui.color.Color;
 import me.piitex.engine.ui.containers.Container;
+import me.piitex.engine.ui.containers.ResizableContainer;
 import me.piitex.engine.ui.image.ImageLoader;
 import me.piitex.engine.ui.layout.HorizontalLayout;
 import me.piitex.engine.ui.layout.Layout;
+import me.piitex.engine.ui.layout.StackLayout;
 import me.piitex.engine.ui.layout.VerticalLayout;
-import me.piitex.engine.ui.overlays.ButtonOverlay;
-import me.piitex.engine.ui.overlays.ImageOverlay;
-import me.piitex.engine.ui.overlays.TextFlowOverlay;
-import me.piitex.engine.ui.overlays.TextOverlay;
+import me.piitex.engine.ui.overlays.*;
 import me.piitex.engine.utils.flags.Nullable;
 import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.characters.Character;
@@ -23,7 +22,7 @@ import java.util.List;
 public class ImageScene extends Scene {
     @Nullable private final ImageOverlay background;
     @Nullable private Character character;
-    @Nullable private String dialogue;
+    @Nullable private String dialogue = "";
 
     private final RenJava renJava = RenJava.getInstance();
 
@@ -43,7 +42,7 @@ public class ImageScene extends Scene {
         double height = RenJava.getConfiguration().getHeight();
         double scale = width / 1920.0;
 
-        Container container = new Container(width, height);
+        Container container = new ResizableContainer(width, height);
 
         // Render background image or draw black
         if (background != null) {
@@ -56,25 +55,49 @@ public class ImageScene extends Scene {
         // Check if dialogue exists to render text box
         if (dialogue != null) {
             File textboxFile = new File(renJava.getGuiDirectory(), "textbox.png");
-            Image image = ImageLoader.load(textboxFile);
-            double boxW = width;
-            double boxH = image.getHeight() * (width / image.getWidth());
-            double boxY = height - boxH;
 
-            ImageOverlay textBox = new ImageOverlay(textboxFile, boxW, boxH);
-            textBox.setPosition(0, boxY);
-            container.addElement(textBox);
+            // Stack container to stack the background image the the text box
+            StackLayout dialogueBox = new StackLayout(container.getWidth(), 177);
+            dialogueBox.setClipping(true);
+            dialogueBox.setY(container.getHeight() - dialogueBox.getHeight());
+            container.addElement(dialogueBox);
 
-            String characterName = character.getDisplayName();
-            if (characterName != null) {
-                TextOverlay name = new TextOverlay(characterName, (float) (45 * scale), character.getColor());
-                name.setPosition(360 * scale, boxY);
-                container.addElement(name);
-            }
+            ImageOverlay background = new ImageOverlay(textboxFile);
+            dialogueBox.addElement(background);
 
-            TextFlowOverlay text = new TextFlowOverlay(dialogue, 1116 * scale, (float) (33 * scale), Color.WHITE);
-            text.setPosition(402 * scale, boxY + 75 * scale);
-            container.addElement(text);
+            // Multi-layer box design
+            // First is a vertical layout to separate top-box and bottom-box.
+            // Top-box will have the character name and a seperator.
+            // Bottom box will have the dialogue.
+            VerticalLayout main = new VerticalLayout(dialogueBox.getWidth(), dialogueBox.getHeight());
+            main.setAlignment(Layout.Alignment.TOP_CENTER);
+            main.setClipping(true);
+            main.setPadding(10);
+            main.setSpacing(10);
+            dialogueBox.addElement(main);
+
+            // This is not aligned to top center. It should be aligned with the bottom box but its too far over by ~400px.
+            VerticalLayout topBox = new VerticalLayout(main.getWidth(), 50);
+            topBox.setAlignment(Layout.Alignment.TOP_CENTER);
+            main.addElement(topBox);
+
+            TextOverlay displayName = new TextOverlay(character.getDisplayName());
+            displayName.setFontSize(RenJava.CONFIGURATION.getCharacterTextSize());
+            topBox.addElement(displayName);
+
+            SeparatorOverlay separatorOverlay = new SeparatorOverlay(1000);
+            separatorOverlay.setLineColor(Color.GRAY);
+            separatorOverlay.setOpacity(0.6f);
+            topBox.addElement(separatorOverlay);
+
+            VerticalLayout bottomBox = new VerticalLayout(main.getWidth(), 50);
+            bottomBox.setAlignment(Layout.Alignment.TOP_CENTER);
+            main.addElement(bottomBox);
+
+            TextFlowOverlay text = new TextFlowOverlay(dialogue, 500);
+            text.setTextColor(RenJava.CONFIGURATION.getDialogueColor());
+            bottomBox.addElement(text);
+
         }
 
         // Bottom menu

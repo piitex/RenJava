@@ -4,14 +4,15 @@ import me.piitex.engine.Window;
 import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.types.SceneStartEvent;
+import me.piitex.renjava.events.types.StoryEndEvent;
+import me.piitex.renjava.events.types.StoryStartEvent;
 import me.piitex.renjava.loggers.RenLogger;
-import me.piitex.renjava.api.stories.handler.StoryEndInterface;
-import me.piitex.renjava.api.stories.handler.StoryStartInterface;
 import org.slf4j.Logger;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class Story {
     private final String id;
@@ -19,8 +20,8 @@ public abstract class Story {
     private final LinkedHashMap<String, Scene> scenes = new LinkedHashMap<>(); // Linked maps should order by insertion.
     private final TreeMap<Integer, Scene> sceneIndexMap = new TreeMap<>();
 
-    private StoryStartInterface startInterface;
-    private StoryEndInterface endInterface;
+    private Consumer<StoryStartEvent> startEventConsumer;
+    private Consumer<StoryEndEvent> endEventConsumer;
 
     private final Logger logger = RenLogger.LOGGER;
 
@@ -38,30 +39,30 @@ public abstract class Story {
 
     /**
      * Sets a handler for when the story ends.
-     * @param endInterface Handler for the event.
+     * @param consumer Handler for the event.
      * @return The modified Story.
      */
-    public Story onEnd(StoryEndInterface endInterface) {
-        this.endInterface = endInterface;
+    public Story onEnd(Consumer<StoryEndEvent> consumer) {
+        this.endEventConsumer = consumer;
         return this;
     }
 
     /**
      * Sets a handler for when the story starts.
-     * @param storyStartInterface Handler for the event.
+     * @param consumer Handler for the event.
      * @return The modified Story.
      */
-    public Story onStart(StoryStartInterface storyStartInterface) {
-        this.startInterface = storyStartInterface;
+    public Story onStart(Consumer<StoryStartEvent> consumer) {
+        this.startEventConsumer = consumer;
         return this;
     }
 
-    public StoryStartInterface getStartInterface() {
-        return startInterface;
+    public Consumer<StoryStartEvent> getStartEventConsumer() {
+        return startEventConsumer;
     }
 
-    public StoryEndInterface getEndInterface() {
-        return endInterface;
+    public Consumer<StoryEndEvent> getEndEventConsumer() {
+        return endEventConsumer;
     }
 
     /**

@@ -26,7 +26,7 @@ public class RenJavaConfiguration {
     private File uiFont;
     private File characterDisplayFont;
     private File choiceButtonFont;
-    private Color dialogueColor = Color.BLACK;
+    private Color dialogueColor = Color.WHITE;
     private Color choiceButtonColor = Color.BLACK;
     private Color hoverColor = Color.BLUE;
     private int dialogueBoxWidth = 1000;

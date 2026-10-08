@@ -179,6 +179,7 @@ public class Launch {
 
     public static void start(RenJava renJava) {
         Window window = new Window(new WindowOptions(renJava.name + " v" + renJava.version).setDimensions(RenJava.getConfiguration().getWidth(), RenJava.getConfiguration().getHeight()));
+        window.setBackgroundColor(Color.BLACK);
         new GuiLoader(window, RenJava.getInstance());
         new Engine().start(window);
     }

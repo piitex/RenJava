@@ -34,6 +34,7 @@ public class ImageScene extends Scene {
         this.dialogue = dialogue;
     }
 
+
     @Override
     public Container build() {
         double width = RenJava.getConfiguration().getWidth();
@@ -102,7 +103,9 @@ public class ImageScene extends Scene {
         // Bottom menu
         container.addElement(buildQuickMenu(width, height, scale));
 
+        // Update/Inputs
         setContainer(container);
+        handleInput();
 
         return container;
     }

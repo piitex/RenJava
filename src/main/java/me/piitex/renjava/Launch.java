@@ -5,8 +5,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import me.piitex.engine.Engine;
 import me.piitex.engine.Window;
@@ -181,6 +182,19 @@ public class Launch {
         Window window = new Window(new WindowOptions(renJava.name + " v" + renJava.version).setDimensions(RenJava.getConfiguration().getWidth(), RenJava.getConfiguration().getHeight()));
         window.setBackgroundColor(Color.BLACK);
         new GuiLoader(window, RenJava.getInstance());
+
+        long end = System.currentTimeMillis();
+        long time = end - start;
+        DateFormat format = new SimpleDateFormat("ss.SS");
+
+        String s = format.format(time);
+        // I hate that it displays the leading 0: 01.26s
+        // Fix
+        if (s.startsWith("0")) {
+            s = s.replaceFirst("0", "");
+        }
+        log.info("Loaded in " + s + "s");
+
         new Engine().start(window);
     }
 

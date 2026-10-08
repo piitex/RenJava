@@ -13,6 +13,7 @@ import me.piitex.engine.Window;
 import me.piitex.engine.WindowOptions;
 import me.piitex.engine.io.AppEnvironment;
 import me.piitex.engine.ui.color.Color;
+import me.piitex.engine.ui.color.RainbowColor;
 import me.piitex.engine.ui.image.ImageLoader;
 import me.piitex.engine.ui.overlays.ImageOverlay;
 import me.piitex.renjava.api.characters.Character;
@@ -225,7 +226,7 @@ public class Launch {
 
         @Override
         public void createBaseData() {
-            registerCharacter(new Character("ren", "Ren", Color.RED) {
+            registerCharacter(new Character("ren", "Ren", new RainbowColor()) {
             });
         }
 

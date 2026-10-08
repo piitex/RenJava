@@ -3,7 +3,6 @@ package me.piitex.renjava.api.scenes.types;
 import me.piitex.engine.ui.color.Color;
 import me.piitex.engine.ui.containers.Container;
 import me.piitex.engine.ui.containers.ResizableContainer;
-import me.piitex.engine.ui.image.ImageLoader;
 import me.piitex.engine.ui.layout.HorizontalLayout;
 import me.piitex.engine.ui.layout.Layout;
 import me.piitex.engine.ui.layout.StackLayout;
@@ -14,7 +13,6 @@ import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.characters.Character;
 import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.gui.StageType;
-import org.jetbrains.skia.Image;
 
 import java.io.File;
 import java.util.List;
@@ -82,6 +80,7 @@ public class ImageScene extends Scene {
             main.addElement(topBox);
 
             TextOverlay displayName = new TextOverlay(character.getDisplayName());
+            displayName.setTextColor(character.getColor());
             displayName.setFontSize(RenJava.CONFIGURATION.getCharacterTextSize());
             topBox.addElement(displayName);
 

@@ -1,17 +1,15 @@
 package me.piitex.renjava.api.saves;
 
-import javafx.scene.image.WritableImage;
-import javafx.stage.StageStyle;
+import me.piitex.engine.Window;
+import me.piitex.engine.gl.renderer.Snapshot;
+import me.piitex.engine.ui.containers.Container;
+import me.piitex.engine.ui.overlays.ImageOverlay;
 import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.saves.exceptions.SaveFileEncryptedState;
 import me.piitex.renjava.api.saves.file.SaveFileState;
-import me.piitex.renjava.gui.Container;
-import me.piitex.renjava.gui.Window;
-import me.piitex.renjava.gui.overlays.ImageOverlay;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.loggers.RenLogger;
-import me.piitex.renjava.api.scenes.RenScene;
 import me.piitex.renjava.api.stories.Story;
-import me.piitex.renjava.tasks.Tasks;
 import me.piitex.renjava.utils.FileCrypter;
 
 import java.io.File;
@@ -124,7 +122,7 @@ public class Save {
     }
 
 
-    public ImageOverlay buildPreview(int page) {
+    public ImageOverlay buildPreview() {
         if (!file.exists()) {
             return null;
         }
@@ -139,47 +137,28 @@ public class Save {
         }
 
         Story story = RenJava.PLAYER.getStory((String) o);
-
-        // FIXME: This will produce a lot of programming debt. This is an extremely cheap unoptimized hack.
-        // Set the player to the current story (which is off to a horrible start)
         RenJava.PLAYER.setCurrentStory(story.getId());
 
         // Initialize the story to process the scenes. (Used to execute the `addScene` functions which maps the scenes to the story.)
         story.init();
 
         // Render the scene to the load button.
-        RenScene currentScene = story.getScene((String) saveManager.getSceneSection().get("currentScene"));
+        Scene currentScene = story.getScene((String) saveManager.getSceneSection().get("currentScene"));
         if (currentScene == null) {
             RenLogger.LOGGER.error("Save slot '" + slot + "' appears to be corrupt or has missing information. Unable to render save preview for the file. '" + saveManager.getSceneSection().get("currentScene") + "'");
             return new ImageOverlay("gui/button/slot_idle_background.png");
         }
 
-        // When the render function is called, the stage type will be set to scene type. This will cause issues as the player is technically in the save/load screen.
-        // To prevent the white flash when loading preview use diff window.
-        // On slower machines the window may pop-up for a few seconds but if that's the case your pc doesn't meet spec requirements to begin with.
-        Window hiddenWindow = new Window("", StageStyle.DECORATED, null, 1920, 1080, false, false);
-
-//            hiddenWindow.clear(); // Required (This prevents white boxes from being rendered)
-        Container container = currentScene.build(true);
-        hiddenWindow.addContainers(container);
-        hiddenWindow.build(true);
-
-        WritableImage snapshot = hiddenWindow.getRoot().getScene().snapshot(null);
-        saveImage = new ImageOverlay(snapshot);
-        hiddenWindow.close();
-
-        saveImage.setWidth(384);
-        saveImage.setHeight(216);
-
-        // Since the Renpy assets account for Text they made a transparency space.
-        // To circumvent this extra space we need to add the length of the space so everything is properly aligned.
-        saveImage.setY(15); // Position inside the button
+        Container container = currentScene.build();
+        Snapshot snapshot = container.takeSnapshot();
+        ImageOverlay imageOverlay = snapshot.toOverlay(384, 216);
+        imageOverlay.setY(15);
 
         // Re-encrypt file in async
         if (RenJava.CONFIGURATION.isEncryptSaves())
             encrypt();
 
-        return saveImage;
+        return imageOverlay;
     }
 
     public void encrypt() {

@@ -1,34 +1,44 @@
 package me.piitex.renjava;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
-
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
+import me.piitex.engine.Engine;
+import me.piitex.engine.Window;
+import me.piitex.engine.WindowOptions;
+import me.piitex.engine.io.AppEnvironment;
+import me.piitex.engine.ui.animation.FadeTransition;
+import me.piitex.engine.ui.color.Color;
+import me.piitex.engine.ui.color.RainbowColor;
+import me.piitex.engine.ui.image.ImageLoader;
+import me.piitex.engine.ui.overlays.ImageOverlay;
+import me.piitex.renjava.api.characters.Character;
+import me.piitex.renjava.api.scenes.types.ImageScene;
+import me.piitex.renjava.api.stories.Story;
 import me.piitex.renjava.configuration.Game;
-import me.piitex.renjava.api.loaders.ImageLoader;
 import me.piitex.renjava.configuration.Configuration;
 import me.piitex.renjava.configuration.InfoFile;
 import me.piitex.renjava.configuration.RenJavaConfiguration;
 import me.piitex.renjava.gui.GuiLoader;
-import me.piitex.renjava.gui.Window;
 import me.piitex.renjava.loggers.ApplicationLogger;
 import me.piitex.renjava.loggers.RenLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
-import java.util.Set;
+
 import java.util.stream.Collectors;
 
-public class Launch extends Application {
+public class Launch {
+    private static final Logger log = LogManager.getLogger(Launch.class);
     private static long start;
 
     public static void main(String[] args) {
@@ -86,6 +96,24 @@ public class Launch extends Application {
             Object o = clazz.getDeclaredConstructor().newInstance();
             RenJava renJava = (RenJava) o;
 
+            if (renJava.getClass().isAnnotationPresent(Game.class)) {
+                Game game = renJava.getClass().getAnnotation(Game.class);
+                renJava.name = game.name();
+                renJava.author = game.author();
+                renJava.version = game.version();
+            } else {
+                RenLogger.LOGGER.error("Please annotate your main class with 'Game'.");
+                renJava.name = "Error";
+                renJava.author = "Error";
+                renJava.version = "Error";
+            }
+
+
+            renJava.environment = AppEnvironment.builder(renJava.name)
+                    .devDataDirectory(Path.of("ren-game/"))
+                    .dataDirectory(Path.of(renJava.name + "/"))
+                    .build();
+
             // Double check base dir
             renJava.getBaseDirectory().mkdirs();
             File file = new File(renJava.getBaseDirectory(), "/renjava/");
@@ -122,26 +150,19 @@ public class Launch extends Application {
                 RenLogger.LOGGER.error("Could retrieve runtime information.", e);
             }
 
-            if (renJava.getClass().isAnnotationPresent(Game.class)) {
-                Game game = renJava.getClass().getAnnotation(Game.class);
-                renJava.name = game.name();
-                renJava.author = game.author();
-                renJava.version = game.version();
-            } else {
-                RenLogger.LOGGER.error("Please annotate your main class with 'Game'.");
-                renJava.name = "Error";
-                renJava.author = "Error";
-                renJava.version = "Error";
-            }
-
             // Build configuration
             if (renJava.getClass().isAnnotationPresent(Configuration.class)) {
                 Configuration conf = renJava.getClass().getAnnotation(Configuration.class);
-                RenJavaConfiguration configuration = new RenJavaConfiguration(conf.title().replace("{version}", renJava.version).replace("{name}", renJava.name).replace("{author}", renJava.author), conf.width(), conf.height(), new ImageLoader(conf.windowIconPath()));
+                File icon = renJava.environment.getDataPath("game/images/gui/window_icon.png").toFile();
+                log.info("Icon: {}", icon.getAbsolutePath());
+                RenJavaConfiguration configuration = new RenJavaConfiguration(conf.title().replace("{version}", renJava.version).replace("{name}", renJava.name).replace("{author}", renJava.author),
+                        conf.width(),
+                        conf.height(),
+                        ImageLoader.load(renJava.environment.getDataPath("game/images/gui/window_icon.png").toFile()));
                 renJava.setConfiguration(configuration);
             } else {
                 RenLogger.LOGGER.error("Configuration annotation not found. Please annotate your main class with 'Configuration'");
-                RenJavaConfiguration configuration = new RenJavaConfiguration("Error", 1920, 1080, new ImageLoader("gui/window_icon.png"));
+                RenJavaConfiguration configuration = new RenJavaConfiguration("Error", 1920, 1080, ImageLoader.load("gui/window_icon.png"));
                 renJava.setConfiguration(configuration);
             }
 
@@ -150,18 +171,18 @@ public class Launch extends Application {
             renJava.setLogger(applicationLogger.LOGGER);
 
             renJava.getLogger().info("Initialized logger...");
-
+            renJava.preEnabled();
             renJava.init(); // Initialize game
-            launch(args);
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            start(renJava);
+        } catch (IOException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             RenLogger.LOGGER.error("Could initialize the RenJava framework: {}", e.getMessage());
         }
     }
 
-    @Override
-    public void start(Stage stage) {
-        // When launched, load the gui stuff.
-        new GuiLoader(stage, RenJava.getInstance(), getHostServices());
+    public static void start(RenJava renJava) {
+        Window window = new Window(new WindowOptions(renJava.name + " v" + renJava.version).setDimensions(RenJava.getConfiguration().getWidth(), RenJava.getConfiguration().getHeight()));
+        window.setBackgroundColor(Color.BLACK);
+        new GuiLoader(window, RenJava.getInstance());
 
         long end = System.currentTimeMillis();
         long time = end - start;
@@ -173,33 +194,37 @@ public class Launch extends Application {
         if (s.startsWith("0")) {
             s = s.replaceFirst("0", "");
         }
+        log.info("Loaded in " + s + "s");
 
-        RenJava.getInstance().getLogger().info("Loaded in " + s + "s");
+        new Engine().start(window);
     }
 
     /**
      * This is just a default execute for testing purposes only.
      */
-    @Game(name = "Default Execute", author = "piitex", version = "0.0.0")
-    @Configuration(title = "{name}", width = 1920, height = 1080)
+    @Game(name = "Default Execute", author = "piitex", version = "1.0")
+    @Configuration(title = "{name}", width = 1280, height = 720)
     private static class DefaultExecute extends RenJava {
 
         public DefaultExecute() {
             RenLogger.LOGGER.error("No game execute was found. Creating a default testing execute...");
             File dir = new File(System.getProperty("user.dir") + "/test/");
             dir.mkdirs();
-            setBaseDir(dir);
         }
 
         @Override
         public void preEnabled() {
+            System.out.println("Loading pre data...");
             RenJavaConfiguration configuration = getConfiguration();
+            configuration.setDefaultFont(new File(getFontsDirectory(), "Roboto-Regular.ttf"));
+            configuration.setUiFont(new File(getFontsDirectory(), "Roboto-Regular.ttf"));
             configuration.setStoreLocalSaves(false);
         }
 
         @Override
         public void createBaseData() {
-
+            registerCharacter(new Character("ren", "Ren", new RainbowColor()) {
+            });
         }
 
         @Override
@@ -214,7 +239,22 @@ public class Launch extends Application {
 
         @Override
         public void start() {
+            Story story = new Story("story") {
+                @Override
+                public void init() {
+                    ImageOverlay background = new ImageOverlay(new File(getImagesDirectory(), "image.png"));
 
+                    ImageScene first = new ImageScene("1", background, getCharacter("ren"), "Some text.");
+                    first.setStartTransition(new FadeTransition(3f, FadeTransition.Direction.IN));
+                    first.setEndTransition(new FadeTransition(3f, FadeTransition.Direction.OUT));
+                    addScene(first);
+
+                    ImageScene second = new ImageScene("2", background, getCharacter("ren"), "Even more text.");
+                    second.setStartTransition(new FadeTransition(3f, FadeTransition.Direction.IN));
+                    addScene(second);
+                }
+            };
+            story.start();
         }
     }
 }

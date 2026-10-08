@@ -7,7 +7,7 @@ public class Main {
      *
      * @param args Application parameters.
      */
-    public static void main(String[] args) {
+    static void main(String[] args) {
         Launch.main(args);
     }
 }

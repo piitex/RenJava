@@ -1,17 +1,16 @@
 package me.piitex.renjava.events.types;
 
-import javafx.scene.control.Button;
-import me.piitex.renjava.api.scenes.RenScene;
+import me.piitex.engine.ui.overlays.ButtonOverlay;
 import me.piitex.renjava.events.Event;
 
 public class ButtonClickEvent extends Event {
-    private final Button button;
+    private final ButtonOverlay button;
 
-    public ButtonClickEvent(Button button) {
+    public ButtonClickEvent(ButtonOverlay button) {
         this.button = button;
     }
 
-    public Button getButton() {
+    public ButtonOverlay getButton() {
         return button;
     }
 }

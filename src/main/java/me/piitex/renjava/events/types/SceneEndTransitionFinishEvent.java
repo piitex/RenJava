@@ -1,15 +1,15 @@
 package me.piitex.renjava.events.types;
 
-import me.piitex.renjava.api.scenes.RenScene;
-import me.piitex.renjava.api.scenes.transitions.Transitions;
+import me.piitex.engine.ui.animation.Transition;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.Event;
 
 public class SceneEndTransitionFinishEvent extends Event {
-    private final RenScene scene;
-    private final Transitions transitions;
+    private final Scene scene;
+    private final Transition transitions;
     private boolean skipped;
 
-    public SceneEndTransitionFinishEvent(RenScene scene, Transitions transitions) {
+    public SceneEndTransitionFinishEvent(Scene scene, Transition transitions) {
         this.scene = scene;
         this.transitions = transitions;
     }
@@ -22,11 +22,11 @@ public class SceneEndTransitionFinishEvent extends Event {
         this.skipped = skipped;
     }
 
-    public RenScene getScene() {
+    public Scene getScene() {
         return scene;
     }
 
-    public Transitions getTransitions() {
+    public Transition getTransitions() {
         return transitions;
     }
 }

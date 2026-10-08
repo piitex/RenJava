@@ -1,7 +1,7 @@
 package me.piitex.renjava.events.types;
 
+import me.piitex.engine.ui.containers.Container;
 import me.piitex.renjava.events.Event;
-import me.piitex.renjava.gui.Container;
 
 public class MainMenuDispatchEvent extends Event {
     private final Container menu;

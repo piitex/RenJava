@@ -1,17 +1,14 @@
 package me.piitex.renjava.api.player;
 
-import javafx.scene.Scene;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
+import me.piitex.engine.ui.animation.Transition;
+import me.piitex.engine.ui.overlays.ImageOverlay;
 import me.piitex.renjava.RenJava;
-import me.piitex.renjava.api.scenes.transitions.Transitions;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.gui.StageType;
-import me.piitex.renjava.gui.overlays.ImageOverlay;
 import me.piitex.renjava.loggers.RenLogger;
 import me.piitex.renjava.api.exceptions.InvalidStoryException;
 import me.piitex.renjava.api.saves.data.Data;
 import me.piitex.renjava.api.saves.data.PersistentData;
-import me.piitex.renjava.api.scenes.RenScene;
 import me.piitex.renjava.api.stories.Story;
 import me.piitex.renjava.utils.LimitedTreeMap;
 
@@ -25,8 +22,7 @@ public class Player implements PersistentData {
     @Data private String currentScene;
     @Data private String currentStory;
     private StageType currentStageType;
-    private MediaPlayer currentMedia;
-    private Transitions currentTransition;
+    private Transition currentTransition;
 
     // Entry to map the story for the image
     private Map.Entry<String, ImageOverlay> lastDisplayedImage;
@@ -47,15 +43,14 @@ public class Player implements PersistentData {
 
     private final Map<String, Story> storyIdMap = new HashMap<>();
 
-    private Scene lastRenderedScene;
-    private RenScene lastRenderedRenScene;
+    private Scene lastRenderedRenScene;
 
     public boolean hasSeenScene(Story story, String sceneID) {
         //return viewedScenes.containsKey(sceneID) && viewedScenes.containsValue(story.getId());
         return viewedScenes.entrySet().stream().filter(integerEntryEntry -> integerEntryEntry.getValue().getKey().equalsIgnoreCase(sceneID) && integerEntryEntry.getValue().getValue().equalsIgnoreCase(story.getId())).findAny().orElse(null) != null;
     }
 
-    public RenScene getCurrentScene() {
+    public Scene getCurrentScene() {
         if (getCurrentStory() != null) {
             return getCurrentStory().getScene(currentScene);
         }
@@ -100,10 +95,14 @@ public class Player implements PersistentData {
         return getStory(viewedStories.getLast());
     }
 
-    public RenScene getLastViewedScene() {
+    public Scene getLastViewedScene() {
         // Get the last viewed scene that was rendered. Not the last scene that was indexed.
-        RenScene scene = getCurrentStory().getScene(currentScene);
-        Map.Entry<Integer, Map.Entry<String, String>> currentEntry = getViewedScenes().entrySet().stream().filter(integerEntryEntry -> integerEntryEntry.getValue().getKey().equalsIgnoreCase(scene.getId()) && integerEntryEntry.getValue().getValue().equalsIgnoreCase(scene.getStory().getId())).findAny().orElse(null);
+        Scene scene = getCurrentStory().getScene(currentScene);
+        Map.Entry<Integer, Map.Entry<String, String>> currentEntry = getViewedScenes()
+                .entrySet()
+                .stream()
+                .filter(integerEntryEntry -> integerEntryEntry.getValue().getKey().equalsIgnoreCase(scene.getId()) &&
+                        integerEntryEntry.getValue().getValue().equalsIgnoreCase(scene.getStory().getId())).findAny().orElse(null);
         int index;
         if (currentEntry != null) {
             index = currentEntry.getKey() - 1;
@@ -184,11 +183,11 @@ public class Player implements PersistentData {
         this.skipAutoScene = skipAutoScene;
     }
 
-    public Transitions getCurrentTransition() {
+    public Transition getCurrentTransition() {
         return currentTransition;
     }
 
-    public void setCurrentTransition(Transitions currentTransition) {
+    public void setCurrentTransition(Transition currentTransition) {
         this.currentTransition = currentTransition;
     }
 
@@ -196,46 +195,22 @@ public class Player implements PersistentData {
         if (currentTransition == null) {
             return false;
         }
-        return currentTransition.isPlaying();
+        return !currentTransition.isFinished();
     }
 
-    public MediaPlayer getCurrentMedia() {
-        return currentMedia;
-    }
-
-    public void setCurrentMedia(MediaPlayer currentMedia) {
-        this.currentMedia = currentMedia;
-    }
-
-    public void updatePlayingMedia(Media media) {
-        if (currentMedia != null) {
-            currentMedia.stop();
-            currentMedia.dispose();
-        }
-        currentMedia = new MediaPlayer(media);
-    }
-
-    public Scene getLastRenderedScene() {
-        return lastRenderedScene;
-    }
-
-    public void setLastRenderedScene(Scene lastRenderedScene) {
-        this.lastRenderedScene = lastRenderedScene;
-    }
-
-    public RenScene getLastRenderedRenScene() {
+    public Scene getLastRenderedRenScene() {
         return lastRenderedRenScene;
     }
 
-    public void setLastRenderedRenScene(RenScene lastRenderedRenScene) {
+    public void setLastRenderedRenScene(Scene lastRenderedRenScene) {
         this.lastRenderedRenScene = lastRenderedRenScene;
     }
 
-    public void updateScene(RenScene renScene) {
+    public void updateScene(Scene renScene) {
         updateScene(renScene, false);
     }
 
-    public void updateScene(RenScene renScene, boolean rollback) {
+    public void updateScene(Scene renScene, boolean rollback) {
         setCurrentScene(renScene.getId()); // Update the scene.
         setCurrentStory(renScene.getStory());
     }
@@ -248,9 +223,6 @@ public class Player implements PersistentData {
         viewedStories.clear();
         rolledScenes.clear();
         lastDisplayedImage = null;
-        if (currentMedia != null) {
-            currentMedia.dispose();
-        }
         if (currentTransition != null) {
             currentTransition.stop();
         }

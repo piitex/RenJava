@@ -1,20 +1,14 @@
 package me.piitex.renjava.gui;
 
-import javafx.animation.PauseTransition;
-
-import javafx.application.HostServices;
-import javafx.application.Platform;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.util.Duration;
+import me.piitex.engine.Window;
+import me.piitex.engine.WindowStyle;
+import me.piitex.engine.scheduler.Scheduler;
+import me.piitex.engine.ui.containers.Container;
+import me.piitex.engine.ui.image.ImageLoader;
 import me.piitex.renjava.RenJava;
-import me.piitex.renjava.api.loaders.ImageLoader;
-import me.piitex.renjava.gui.containers.EmptyContainer;
 import me.piitex.renjava.gui.menus.DefaultMainMenu;
 import me.piitex.renjava.gui.menus.MainMenu;
-import me.piitex.renjava.gui.overlays.ImageOverlay;
 import me.piitex.renjava.loggers.RenLogger;
-import me.piitex.renjava.api.loaders.FontLoader;
 import me.piitex.renjava.configuration.RenJavaConfiguration;
 import me.piitex.renjava.events.types.*;
 import me.piitex.renjava.tasks.Tasks;
@@ -29,19 +23,18 @@ import java.nio.file.Path;
  * Loader class for loading the GUI. Starts with the splash screen first.
  */
 public class GuiLoader {
-    private final Stage stage;
     private final RenJava renJava;
+    private final Window window;
 
-    public GuiLoader(Stage stage, RenJava renJava, HostServices services) {
-        this.stage = stage;
+    public GuiLoader(Window window, RenJava renJava) {
         this.renJava = renJava;
-        renJava.setHost(services);
+        this.window = window;
         buildSplashScreen();
     }
 
     private void buildSplashScreen() {
         RenLogger.LOGGER.info("Creating Splash screen...");
-        stage.initStyle(StageStyle.UNDECORATED);
+        window.setStyle(WindowStyle.BORDERLESS);
         // Update Stage
         RenJava.PLAYER.setCurrentStageType(StageType.MAIN_MENU);
 
@@ -53,17 +46,12 @@ public class GuiLoader {
             return; // Don't create a splash screen if one wasn't set.
         }
 
-        window.render();
-
         Tasks.runAsync(this::renJavaFrameworkBuild);
 
-        PauseTransition wait = new PauseTransition(Duration.seconds(3)); // TODO: 2/17/2024 Make this configurable.
-        wait.setOnFinished(actionEvent -> {
-            window.close(); // Closes stage for the splash screen (required)
+        Scheduler.after(3f, () -> {
+            window.hide();
             buildMainMenu();
         });
-
-        wait.play();
     }
 
     private void renJavaFrameworkBuild() {
@@ -80,23 +68,23 @@ public class GuiLoader {
         RenJavaConfiguration configuration = RenJava.CONFIGURATION;
         if (configuration.getDefaultFont() == null) {
             RenLogger.LOGGER.error("Default font not set.");
-            RenJava.CONFIGURATION.setDefaultFont(new FontLoader("Arial", 24));
+//            RenJava.CONFIGURATION.setDefaultFont(new FontLoader("Arial", 24));
         }
         if (configuration.getUiFont() == null) {
             RenLogger.LOGGER.error("UI font not set.");
-            RenJava.CONFIGURATION.setUiFont(new FontLoader("Arial", 26));
+//            RenJava.CONFIGURATION.setUiFont(new FontLoader("Arial", 26));
         }
         if (configuration.getCharacterDisplayFont() == null) {
             RenLogger.LOGGER.warn("Character display font not set.");
-            RenJava.CONFIGURATION.setCharacterDisplayFont(new FontLoader("Arial", 26));
+//            RenJava.CONFIGURATION.setCharacterDisplayFont(new FontLoader("Arial", 26));
         }
         if (configuration.getDialogueFont() == null) {
             RenLogger.LOGGER.warn("Dialogue font not set.");
-            RenJava.CONFIGURATION.setDialogueFont(new FontLoader("Arial", 26));
+//            RenJava.CONFIGURATION.setDialogueFont(new FontLoader("Arial", 26));
         }
         if (configuration.getChoiceButtonFont() == null) {
             RenLogger.LOGGER.warn("Choice button font not set.");
-            RenJava.CONFIGURATION.setChoiceButtonFont(new FontLoader("Arial", 28));
+//            RenJava.CONFIGURATION.setChoiceButtonFont(new FontLoader("Arial", 28));
         }
 
         // Preset width and height
@@ -105,9 +93,13 @@ public class GuiLoader {
 
         RenLogger.LOGGER.info("Rendering main menu...");
         // When building title screen create a new window and eventually store the window for easy access
-        Window window = new Window(RenJava.CONFIGURATION.getGameTitle(), StageStyle.DECORATED, new ImageLoader("gui/window_icon.png"));
+        //Window newWindow = new Window(RenJava.CONFIGURATION.getGameTitle(), StageStyle.DECORATED, new ImageLoader("gui/window_icon.png"));
         // Specifically for the gameWindow it is needed to setup the shutdown events.
-        window.getStage().setOnHiding(windowEvent -> {
+
+        // TODO: Update window path
+        window.getWindowOptions().setStyle(WindowStyle.STANDARD)
+                .setIcon(ImageLoader.load(new File(RenJava.getInstance().getBaseDirectory(), "game/images/gui/window_icon.png")));
+        window.onClose(() -> {
             ShutdownEvent shutdownEvent = new ShutdownEvent();
             RenJava.getEventHandler().callEvent(shutdownEvent);
 
@@ -134,9 +126,6 @@ public class GuiLoader {
                     // If caught ignore and let the application close.
                 }
             }
-
-            Platform.exit();
-            System.exit(0);
         });
 
 
@@ -161,14 +150,12 @@ public class GuiLoader {
 
         Container sideMenu = menu.sideMenu(false);
 
-        window.addContainers(sideMenu);
+        container.addElement(sideMenu);
 
         MainMenuDispatchEvent dispatchEvent = new MainMenuDispatchEvent(container);
         RenJava.getEventHandler().callEvent(dispatchEvent);
 
         window.setMaximized(configuration.isMaximizedGameWindow());
-
-        window.render(); // Renders the window
 
         MainMenuRenderEvent renderEvent = new MainMenuRenderEvent(container, false);
         RenJava.getEventHandler().callEvent(renderEvent);

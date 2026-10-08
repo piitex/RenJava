@@ -1,17 +1,17 @@
 package me.piitex.renjava.events.types;
 
-import me.piitex.renjava.api.scenes.RenScene;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.Event;
 
 public class SceneEndEvent extends Event {
-    private final RenScene scene;
+    private final Scene scene;
     private boolean autoPlayNextScene = true;
 
-    public RenScene getScene() {
+    public Scene getScene() {
         return scene;
     }
 
-    public SceneEndEvent(RenScene scene) {
+    public SceneEndEvent(Scene scene) {
         this.scene = scene;
     }
 

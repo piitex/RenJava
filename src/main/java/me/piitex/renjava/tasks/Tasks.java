@@ -1,13 +1,13 @@
 package me.piitex.renjava.tasks;
 
-import javafx.application.Platform;
+import me.piitex.engine.scheduler.Scheduler;
 import me.piitex.renjava.RenJava;
 
 public class Tasks {
 
     // Runs code specifically on the javafx thread.
-    public static void runJavaFXThread(Runnable runnable) {
-        Platform.runLater(runnable);
+    public static void runRendererThread(Runnable runnable) {
+        Scheduler.runLater(runnable);
     }
 
     // This will allow code to be executed which doesn't block the javafx thread.

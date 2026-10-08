@@ -1,6 +1,6 @@
 package me.piitex.renjava.events.types;
 
-import javafx.scene.input.MouseEvent;
+import me.piitex.engine.ui.events.MouseEvent;
 import me.piitex.renjava.events.Cancellable;
 import me.piitex.renjava.events.Event;
 

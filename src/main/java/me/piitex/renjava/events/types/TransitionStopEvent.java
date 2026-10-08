@@ -1,33 +1,33 @@
 package me.piitex.renjava.events.types;
 
-import me.piitex.renjava.api.scenes.RenScene;
-import me.piitex.renjava.api.scenes.transitions.Transitions;
+import me.piitex.engine.ui.animation.Transition;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.Event;
 
 public class TransitionStopEvent extends Event {
-    private final Transitions transitions;
-    private RenScene scene;
+    private final Transition transitions;
+    private Scene scene;
 
     private boolean startTransition = false;
 
-    public TransitionStopEvent(Transitions transitions) {
+    public TransitionStopEvent(Transition transitions) {
         this.transitions = transitions;
     }
 
-    public TransitionStopEvent(Transitions transitions, RenScene scene) {
+    public TransitionStopEvent(Transition transitions, Scene scene) {
         this.transitions = transitions;
         this.scene = scene;
     }
 
-    public Transitions getTransitions() {
+    public Transition getTransitions() {
         return transitions;
     }
 
-    public void setScene(RenScene scene) {
+    public void setScene(Scene scene) {
         this.scene = scene;
     }
 
-    public RenScene getScene() {
+    public Scene getScene() {
         return scene;
     }
 

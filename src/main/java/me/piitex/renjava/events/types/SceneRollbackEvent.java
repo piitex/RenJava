@@ -1,22 +1,22 @@
 package me.piitex.renjava.events.types;
 
-import me.piitex.renjava.api.scenes.RenScene;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.Event;
 
 public class SceneRollbackEvent extends Event {
-    private final RenScene toScene;
-    private final RenScene fromScene;
+    private final Scene toScene;
+    private final Scene fromScene;
 
-    public SceneRollbackEvent(RenScene toScene, RenScene fromScene) {
+    public SceneRollbackEvent(Scene toScene, Scene fromScene) {
         this.toScene = toScene;
         this.fromScene = fromScene;
     }
 
-    public RenScene getToScene() {
+    public Scene getToScene() {
         return toScene;
     }
 
-    public RenScene getFromScene() {
+    public Scene getFromScene() {
         return fromScene;
     }
 }

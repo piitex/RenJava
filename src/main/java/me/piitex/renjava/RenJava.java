@@ -1,12 +1,15 @@
 package me.piitex.renjava;
 
-import javafx.application.HostServices;
-import javafx.scene.paint.Color;
-import javafx.stage.StageStyle;
+import me.piitex.engine.Window;
+import me.piitex.engine.io.AppEnvironment;
+import me.piitex.engine.ui.color.Color;
+import me.piitex.engine.ui.layout.Layout;
+import me.piitex.engine.ui.layout.VerticalLayout;
+import me.piitex.engine.ui.overlays.TextFlowOverlay;
+import me.piitex.engine.ui.scroll.ScrollContainer;
 import me.piitex.renjava.addons.AddonLoader;
 import me.piitex.renjava.configuration.Game;
 import me.piitex.renjava.api.exceptions.InvalidCharacterException;
-import me.piitex.renjava.api.music.Tracks;
 import me.piitex.renjava.api.saves.data.Data;
 import me.piitex.renjava.api.saves.data.PersistentData;
 import me.piitex.renjava.api.characters.Character;
@@ -15,12 +18,7 @@ import me.piitex.renjava.configuration.Configuration;
 import me.piitex.renjava.configuration.RenJavaConfiguration;
 import me.piitex.renjava.configuration.SettingsProperties;
 import me.piitex.renjava.events.EventHandler;
-import me.piitex.renjava.events.defaults.*;
-import me.piitex.renjava.gui.Window;
-import me.piitex.renjava.gui.containers.ScrollContainer;
-import me.piitex.renjava.gui.layouts.VerticalLayout;
 import me.piitex.renjava.gui.menus.MainMenu;
-import me.piitex.renjava.gui.overlays.*;
 import me.piitex.renjava.loggers.RenLogger;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
@@ -57,21 +55,17 @@ public abstract class RenJava {
     protected String name;
     protected String author;
     protected String version;
+    protected AppEnvironment environment;
     protected int id;
     public static Player PLAYER;
     public static RenJavaConfiguration CONFIGURATION;
-    // Audio Tracking
-    public static Tracks TRACKS;
     public static AddonLoader ADDONLOADER;
     // User settings
     public static SettingsProperties SETTINGS;
     public static EventHandler EVENTHANDLER;
 
     private Window gameWindow;
-    private static Window errorWindow;
     private MainMenu mainMenu;
-
-    private HostServices hostServices;
 
     private Logger logger;
 
@@ -85,9 +79,6 @@ public abstract class RenJava {
     private static long lastErrorTimeStamp;
     private static int spamTrack = 0;
 
-    // The gameDir cannot change so make it final
-    private File baseDir = new File(System.getProperty("user.dir"));
-
     private static RenJava instance;
 
     protected RenJava() {
@@ -98,17 +89,9 @@ public abstract class RenJava {
     protected void init() {
         // Run after super
         PLAYER = new Player();
-        TRACKS = new Tracks();
         EVENTHANDLER = new EventHandler();
 
-        EVENTHANDLER.registerListener(new MenuClickEventListener());
-        EVENTHANDLER.registerListener(new GameFlowEventListener());
-        EVENTHANDLER.registerListener(new StoryHandlerEventListener());
-        EVENTHANDLER.registerListener(new ScenesEventListener());
-        EVENTHANDLER.registerListener(new OverlayEventListener());
         this.registerData(PLAYER);
-        this.registerData(TRACKS);
-        new RenLoader(this);
         ADDONLOADER = new AddonLoader();
     }
 
@@ -143,12 +126,6 @@ public abstract class RenJava {
         return buildVersion;
     }
 
-    /**
-     * <p>
-     * The game {@link Window} is the main window which renders the scenes. The framework will automatically clear containers during the rendering process. Modifying the game window is not fully supported.
-     * Please use the proper events to modify containers as modifications to the game window may have no effect.
-     * @return The current window for the game.
-     */
     public Window getGameWindow() {
         return gameWindow;
     }
@@ -173,19 +150,8 @@ public abstract class RenJava {
          SETTINGS = settings;
      }
 
-    /**
-     * @return The systems host services such as web browser.
-     */
-    public HostServices getHost() {
-         return hostServices;
-     }
-
-    public void setHost(HostServices services) {
-         this.hostServices = services;
-     }
-
      public Collection<File> getSaves() {
-         File saveDir = new File(baseDir, "/game/saves/");
+         File saveDir = environment.getDataPath("game/saves/").toFile();
          if (saveDir.listFiles() != null) {
              return new LinkedHashSet<>(Arrays.asList(saveDir.listFiles()));
          } else {
@@ -194,23 +160,35 @@ public abstract class RenJava {
          }
      }
 
+    public AppEnvironment getEnvironment() {
+        return environment;
+    }
+
     /**
      * Retrieves the running directory, where the jar file is located.
      *
      * @return The running directory.
      */
     public File getBaseDirectory() {
-        return baseDir;
+        return environment.getDataDirectory().toFile();
     }
 
-    /**
-     * Used for testing purposes. Changes the running directory for the game. The directory must exist.
-     *
-     * @param baseDir - {@link File} location of the new directory.
-     */
-    public void setBaseDir(File baseDir) {
-        this.baseDir = baseDir;
+    public File getGameDirectory() {
+        return new File(getBaseDirectory(), "game/");
     }
+
+    public File getImagesDirectory() {
+        return new File(getGameDirectory(), "images/");
+    }
+
+    public File getGuiDirectory() {
+        return new File(getImagesDirectory(), "gui/");
+    }
+
+    public File getFontsDirectory() {
+        return new File(getGameDirectory(), "fonts/");
+    }
+
 
     /**
      * Registers a character in the RenJava framework.
@@ -411,26 +389,6 @@ public abstract class RenJava {
         return SETTINGS;
     }
 
-    public static Tracks getTracks() {
-        return TRACKS;
-    }
-
-    /**
-     * Opens the provided link in the players default browser.
-     * <p>
-     *     Example Usage:
-     * <p>
-     * <pre>{@code
-     *  openLink("https://www.google.com");
-     * }</pre>
-     * </p>
-     *
-     * @param url Full url link.
-     */
-    public static void openLink(String url) {
-        getInstance().getHost().showDocument(url);
-    }
-
     public static void writeStackTrace(Exception e) {
         if (lastErrorTimeStamp > 0) {
             spamTrack++;
@@ -466,39 +424,29 @@ public abstract class RenJava {
             RenJava.writeStackTrace(e);
         }
 
-        if (errorWindow == null) {
-            errorWindow = new Window("Error", StageStyle.DECORATED, CONFIGURATION.getGameIcon(), 920, 650, false);
-        } else {
-            errorWindow.clearContainers();
-        }
-        errorWindow.build(true);
-
-        errorWindow.setFullscreen(false);
-        errorWindow.setMaximized(false);
-        errorWindow.updateBackground(Color.WHITE);
-
-        VerticalLayout rootLayout = new VerticalLayout(900, 600);
-        ScrollContainer container = new ScrollContainer(rootLayout,0, 0, 900, 600);
-
-        TextOverlay text = new TextOverlay("An error has occurred during the application. A stacktrace file has been created. Please send the file and current log to the author. You can close this window to continue but the game may be unstable.");
-
-
         StringWriter sw = new StringWriter();
         PrintWriter writer = new PrintWriter(sw);
         e.printStackTrace(writer);
 
-        TextOverlay stackTrace = new TextOverlay(sw.toString());
-        LinkedList<Overlay> texts = new LinkedList<>();
-        texts.add(text);
-        texts.add(stackTrace);
+        Window window = RenJava.getInstance().getGameWindow();
+        window.setBackgroundColor(Color.DARK_GRAY); // doesn't work
+        window.clear();
 
-        TextFlowOverlay textFlowOverlay = new TextFlowOverlay(texts, 900, 600);
-        rootLayout.addOverlay(textFlowOverlay);
+        ScrollContainer container = new ScrollContainer(CONFIGURATION.getWidth(), CONFIGURATION.getHeight());
+        container.getStyling().setBackgroundColor(Color.TRANSPARENT);
+        window.addContainer(container);
 
-        container.addLayout(rootLayout);
+        VerticalLayout layout = new VerticalLayout(container.getWidth(), container.getHeight());
+        layout.getStyling().setBackgroundColor(Color.TRANSPARENT);
+        layout.setAlignment(Layout.Alignment.TOP_CENTER);
+        container.addElement(layout);
 
-        errorWindow.addContainers(container);
+        TextFlowOverlay stackTrace = new TextFlowOverlay("A fatal error occurred.\n\n" + sw.toString(), 800);
+        stackTrace.setTextColor(Color.WHITE);
+        stackTrace.setFontFile(CONFIGURATION.getUiFont());
+        container.addElement(stackTrace);
+        layout.addElement(stackTrace);
 
-        errorWindow.render();
+
     }
 }

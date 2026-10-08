@@ -1,13 +1,11 @@
 package me.piitex.renjava.configuration;
 
-import javafx.scene.paint.Color;
-import me.piitex.renjava.RenJava;
-import me.piitex.renjava.api.exceptions.GameWindowNotSetException;
-import me.piitex.renjava.api.loaders.FontLoader;
-import me.piitex.renjava.api.loaders.ImageLoader;
-import me.piitex.renjava.gui.Window;
-import me.piitex.renjava.loggers.RenLogger;
+import me.piitex.engine.ui.color.Color;
+import me.piitex.engine.ui.overlays.IconOverlay;
+import me.piitex.engine.ui.text.Font;
+import org.jetbrains.skia.Image;
 
+import java.io.File;
 import java.util.Map;
 
 public class RenJavaConfiguration {
@@ -17,17 +15,18 @@ public class RenJavaConfiguration {
     private double currentWindowWidth;
     private double currentWindowHeight;
     private boolean maximizedGameWindow = true;
-    private final ImageLoader gameIcon;
+    private final Image gameIcon;
 
+    private Color textColor = new Color(0.85f, 0.85f, 0.85f, 1);
     private Color themeColor = Color.BLACK;
-    private Color subColor = Color.DARKGRAY;
+    private Color subColor = Color.DARK_GRAY;
 
-    private FontLoader defaultFont;
-    private FontLoader dialogueFont;
-    private FontLoader uiFont;
-    private FontLoader characterDisplayFont;
-    private FontLoader choiceButtonFont;
-    private Color dialogueColor = Color.BLACK;
+    private File defaultFont;
+    private File dialogueFont;
+    private File uiFont;
+    private File characterDisplayFont;
+    private File choiceButtonFont;
+    private Color dialogueColor = Color.WHITE;
     private Color choiceButtonColor = Color.BLACK;
     private Color hoverColor = Color.BLUE;
     private int dialogueBoxWidth = 1000;
@@ -67,7 +66,7 @@ public class RenJavaConfiguration {
      * @param height    - Height of the game.
      * @param gameIcon  - The game icon is used for the windows bar on the top as well as the icon for the taskbar.
      */
-    public RenJavaConfiguration(String gameTitle, int width, int height, ImageLoader gameIcon) {
+    public RenJavaConfiguration(String gameTitle, int width, int height, Image gameIcon) {
         this.gameTitle = gameTitle;
         this.width = width;
         this.height = height;
@@ -102,7 +101,7 @@ public class RenJavaConfiguration {
         return maximizedGameWindow;
     }
 
-    public ImageLoader getGameIcon() {
+    public Image getGameIcon() {
         return gameIcon;
     }
 
@@ -122,46 +121,48 @@ public class RenJavaConfiguration {
         this.subColor = subColor;
     }
 
-    public FontLoader getDialogueFont() {
+    public File getDialogueFont() {
         if (dialogueFont != null) {
             return dialogueFont;
         }
         return defaultFont;
     }
 
-    public void setDialogueFont(FontLoader dialogueFont) {
+    public void setDialogueFont(File dialogueFont) {
         this.dialogueFont = dialogueFont;
     }
 
-    public FontLoader getDefaultFont() {
+    public File getDefaultFont() {
         return defaultFont;
     }
 
-    public void setDefaultFont(FontLoader defaultFont) {
+    public void setDefaultFont(File defaultFont) {
         this.defaultFont = defaultFont;
+        // RenGL widgets built without an explicit font file resolve their typeface from the engine's own default.
+        Font.setDefaultFont(defaultFont);
     }
 
-    public FontLoader getUiFont() {
+    public File getUiFont() {
         return uiFont;
     }
 
-    public void setUiFont(FontLoader uiFont) {
+    public void setUiFont(File uiFont) {
         this.uiFont = uiFont;
     }
 
-    public FontLoader getCharacterDisplayFont() {
+    public File getCharacterDisplayFont() {
         return characterDisplayFont;
     }
 
-    public FontLoader getChoiceButtonFont() {
+    public File getChoiceButtonFont() {
         return choiceButtonFont;
     }
 
-    public void setChoiceButtonFont(FontLoader choiceButtonFont) {
+    public void setChoiceButtonFont(File choiceButtonFont) {
         this.choiceButtonFont = choiceButtonFont;
     }
 
-    public void setCharacterDisplayFont(FontLoader characterDisplayFont) {
+    public void setCharacterDisplayFont(File characterDisplayFont) {
         this.characterDisplayFont = characterDisplayFont;
     }
 
@@ -179,6 +180,14 @@ public class RenJavaConfiguration {
 
     public void setChoiceButtonColor(Color choiceButtonColor) {
         this.choiceButtonColor = choiceButtonColor;
+    }
+
+    public Color getTextColor() {
+        return textColor;
+    }
+
+    public void setTextColor(Color textColor) {
+        this.textColor = textColor;
     }
 
     public Color getHoverColor() {

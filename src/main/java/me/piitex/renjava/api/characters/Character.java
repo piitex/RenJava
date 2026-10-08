@@ -1,16 +1,16 @@
 package me.piitex.renjava.api.characters;
 
-import javafx.scene.paint.Color;
-import me.piitex.renjava.RenJava;
+import me.piitex.engine.ui.color.Color;
+import me.piitex.engine.ui.color.Paint;
 import me.piitex.renjava.api.saves.data.Data;
 
 public abstract class Character {
     private final String id; // The ID must be unique. The ID system allows you to have multiple characters with the same name.
     @Data private String name; // This is the name display for the character.
-    private final Color color;
+    private final Paint color;
     @Data private String displayName;
 
-    public Character(String id, String name, Color color) {
+    public Character(String id, String name, Paint color) {
         this.id = id;
         this.name = name;
         this.color = color;
@@ -30,7 +30,7 @@ public abstract class Character {
         setDisplayName(name);
     }
 
-    public Color getColor() {
+    public Paint getColor() {
         return color;
     }
 

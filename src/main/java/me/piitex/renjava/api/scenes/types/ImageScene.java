@@ -1,204 +1,133 @@
 package me.piitex.renjava.api.scenes.types;
 
-import javafx.scene.paint.Color;
+import me.piitex.engine.ui.color.Color;
+import me.piitex.engine.ui.containers.Container;
+import me.piitex.engine.ui.containers.ResizableContainer;
+import me.piitex.engine.ui.layout.HorizontalLayout;
+import me.piitex.engine.ui.layout.Layout;
+import me.piitex.engine.ui.layout.StackLayout;
+import me.piitex.engine.ui.layout.VerticalLayout;
+import me.piitex.engine.ui.overlays.*;
+import me.piitex.engine.utils.flags.Nullable;
 import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.characters.Character;
-import me.piitex.renjava.api.scenes.RenScene;
-import me.piitex.renjava.api.scenes.text.StringFormatter;
-import me.piitex.renjava.configuration.RenJavaConfiguration;
-import me.piitex.renjava.events.types.SceneBuildEvent;
-import me.piitex.renjava.gui.Container;
-import me.piitex.renjava.gui.DisplayOrder;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.gui.StageType;
-import me.piitex.renjava.api.loaders.FontLoader;
-import me.piitex.renjava.api.loaders.ImageLoader;
-
-import me.piitex.renjava.gui.containers.EmptyContainer;
-import me.piitex.renjava.gui.overlays.*;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.util.AbstractMap;
-import java.util.LinkedList;
+import java.util.List;
 
+public class ImageScene extends Scene {
+    @Nullable private final ImageOverlay background;
+    @Nullable private Character character;
+    @Nullable private String dialogue = "";
 
-/**
- * The ImageScene class represents an image scene in the RenJava framework.
- * It is used to display an image and text associated with a character.
- * Image scenes are typically used to present visuals and dialogue during gameplay or narrative progression.
- *
- * <p>
- * To create an image scene, instantiate the ImageScene class with the necessary parameters, such as the scene ID, character, dialogue, and background image loader.
- * The character and dialogue parameters can be set to null if they are optional and not needed for a particular image scene.
- * </p>
- *
- * <p>
- * Example usage:
- * <pre>{@code
- * TODO
- * }</pre>
- * </p>
- *
- * <p>
- * Note: The ImageScene class is used to create image scenes in the RenJava framework.
- * </p>
- */
-public class ImageScene extends RenScene {
-    private Character character;
-    private String dialogue;
-    private ImageOverlay backgroundImage;
-    private FontLoader font;
-    private String characterDisplayName;
+    private final RenJava renJava = RenJava.getInstance();
 
-    private final RenJavaConfiguration configuration;
-
-    private static final RenJava renJava = RenJava.getInstance();
-
-    /**
-     * Creates an ImageScene object representing an image scene in the RenJava framework.
-     * An image scene is used to display an image and text associated with a character.
-     * Image scenes are typically used to present visuals and dialogue during gameplay or narrative progression.
-     *
-     * <p>
-     *     <pre>
-     *         {@code
-     *           ImageScene scene = new ImageScene("1", null, null, null); // This is just an empty black scene
-     *           ImageScene scene = new ImageScene("2", character, "This is dialogue", new ImageOverlay("image.png"); // This is a basic scene with an image and dialogue.
-     *         }
-     *     </pre>
-     * </p>
-     *
-     * @param id        The ID used to identify the scene.
-     * @param character The character who is talking. Pass null if no character is talking in the scene.
-     * @param dialogue  The dialogue of the character. Pass null or an empty string if no one is talking.
-     * @param backgroundImage    The background image loader for the scene.
-     */
-    public ImageScene(String id, @Nullable Character character, String dialogue, @Nullable ImageOverlay backgroundImage) {
-        super(id, backgroundImage);
+    public ImageScene(String id,
+                      @Nullable ImageOverlay background,
+                      @Nullable Character character,
+                      @Nullable String dialogue) {
+        super(id);
+        this.background = background;
         this.character = character;
         this.dialogue = dialogue;
-        if (backgroundImage != null) {
-            this.backgroundImage = backgroundImage;
-            RenJava.PLAYER.setLastDisplayedImage(new AbstractMap.SimpleEntry<>(getStory().getId(), backgroundImage));
-        }
-        if (character != null) {
-            this.characterDisplayName = character.getDisplayName();
-        }
-        configuration = RenJava.CONFIGURATION;
-        font = configuration.getDialogueFont();
     }
 
-    public ImageScene(String id, @Nullable Character character, String dialogue) {
-        super(id, null);
-        this.character = character;
-        this.dialogue = dialogue;
-        backgroundImage = RenJava.PLAYER.getLastDisplayedImage().getValue();
-        setBackgroundImage(backgroundImage);
-        configuration = RenJava.CONFIGURATION;
-        font = configuration.getDialogueFont();
-    }
-
-    public Character getCharacter() {
-        return character;
-    }
-
-    public String getCharacterNameDisplay() {
-        return characterDisplayName;
-    }
-
-    public void setCharacter(Character character) {
-        this.character = character;
-    }
-
-    public String getDialogue() {
-        return dialogue;
-    }
-
-    public void setDialogue(String dialogue) {
-        this.dialogue = dialogue;
-    }
-
-    public FontLoader getDialogueFont() {
-        return font;
-    }
-
-    public void setDialogueFont(FontLoader font) {
-        this.font = font;
-    }
 
     @Override
-    public Container build(boolean ui) {
-        Container container = new EmptyContainer(configuration.getWidth(), configuration.getHeight());
-        if (backgroundImage != null) {
-            backgroundImage.setOrder(DisplayOrder.LOW); // Bg should always be at low priority. They will be pushed to the back of the scene.
-            container.addOverlays(backgroundImage);
+    public Container build() {
+        double width = RenJava.getConfiguration().getWidth();
+        double height = RenJava.getConfiguration().getHeight();
+        double scale = width / 1920.0;
+
+        Container container = new ResizableContainer(width, height);
+
+        // Render background image or draw black
+        if (background != null) {
+            container.addElement(background);
         } else {
-            BoxOverlay boxOverlay = new BoxOverlay(container.getWidth(), configuration.getHeight(), Color.BLACK);
-            boxOverlay.setOrder(DisplayOrder.LOW);
-            container.addOverlay(boxOverlay);
-        }
-
-        if (ui) {
-            String characterDisplay;
-            if (character != null) {
-                if (getCharacterNameDisplay() != null) {
-                    // Set character display
-                    characterDisplay = getCharacterNameDisplay();
-                } else {
-                    characterDisplay = character.getDisplayName();
-                }
-
-                if (dialogue != null && !dialogue.isEmpty()) {
-                    ImageLoader textbox = new ImageLoader("gui/textbox.png");
-                    Container textboxMenu = new EmptyContainer(0, 0, configuration.getDialogueBoxWidth(), configuration.getDialogueBoxHeight());
-
-                    ImageOverlay textBoxImage = new ImageOverlay(textbox, configuration.getDialogueBoxX() + configuration.getDialogueOffsetX(), configuration.getDialogueBoxY() + configuration.getDialogueOffsetY());
-                    textboxMenu.addOverlay(textBoxImage);
-
-                    LinkedList<Overlay> texts = StringFormatter.formatText(dialogue);
-                    TextFlowOverlay textFlowOverlay;
-                    if (texts.isEmpty()) {
-                        TextOverlay text = new TextOverlay(dialogue);
-                        text.setFont(RenJava.CONFIGURATION.getDialogueFont());
-                        textFlowOverlay = new TextFlowOverlay(text, configuration.getDialogueBoxWidth(), configuration.getDialogueBoxHeight());
-                    } else {
-                        textFlowOverlay = new TextFlowOverlay(texts, configuration.getDialogueBoxWidth(), configuration.getDialogueBoxHeight());
-                    }
-                    textFlowOverlay.setX(configuration.getTextX() + configuration.getTextOffsetX());
-                    textFlowOverlay.setY(configuration.getTextY() + configuration.getTextOffsetY());
-                    textFlowOverlay.setTextFillColor(configuration.getDialogueColor());
-                    textFlowOverlay.setFont(font);
-                    textboxMenu.addOverlay(textFlowOverlay);
-
-                    TextOverlay characterText = new TextOverlay(characterDisplay, new FontLoader(configuration.getCharacterDisplayFont(), configuration.getCharacterTextSize()),
-                            configuration.getCharacterTextX() + configuration.getCharacterTextOffsetX(),
-                            configuration.getCharacterTextY() + configuration.getCharacterTextOffsetY());
-                    characterText.setTextFill(character.getColor());
-                    characterText.setOrder(DisplayOrder.HIGH);
-                    textboxMenu.addOverlay(characterText);
-
-                    container.addContainers(textboxMenu);
-                }
-            }
+            container.getStyling().setBackgroundColor(Color.BLACK);
         }
 
 
-        for (File file : getStyleSheets()) {
-            try {
-                RenJava.getInstance().getGameWindow().getScene().getStylesheets().add(file.toURI().toURL().toExternalForm());
-            } catch (MalformedURLException e) {
-                renJava.getLogger().error(e.getMessage());
-            }
+        // Check if dialogue exists to render text box
+        if (dialogue != null) {
+            File textboxFile = new File(renJava.getGuiDirectory(), "textbox.png");
+
+            // Stack container to stack the background image the the text box
+            StackLayout dialogueBox = new StackLayout(container.getWidth(), 177);
+            dialogueBox.setClipping(true);
+            dialogueBox.setY(container.getHeight() - dialogueBox.getHeight());
+            container.addElement(dialogueBox);
+
+            ImageOverlay background = new ImageOverlay(textboxFile);
+            dialogueBox.addElement(background);
+
+            // Multi-layer box design
+            // First is a vertical layout to separate top-box and bottom-box.
+            // Top-box will have the character name and a seperator.
+            // Bottom box will have the dialogue.
+            VerticalLayout main = new VerticalLayout(dialogueBox.getWidth(), dialogueBox.getHeight());
+            main.setAlignment(Layout.Alignment.TOP_CENTER);
+            main.setClipping(true);
+            main.setPadding(10);
+            main.setSpacing(10);
+            dialogueBox.addElement(main);
+
+            // This is not aligned to top center. It should be aligned with the bottom box but its too far over by ~400px.
+            VerticalLayout topBox = new VerticalLayout(main.getWidth(), 50);
+            topBox.setAlignment(Layout.Alignment.TOP_CENTER);
+            main.addElement(topBox);
+
+            TextOverlay displayName = new TextOverlay(character.getDisplayName());
+            displayName.setTextColor(character.getColor());
+            displayName.setFontSize(RenJava.CONFIGURATION.getCharacterTextSize());
+            topBox.addElement(displayName);
+
+            SeparatorOverlay separatorOverlay = new SeparatorOverlay(1000);
+            separatorOverlay.setLineColor(Color.GRAY);
+            separatorOverlay.setOpacity(0.6f);
+            topBox.addElement(separatorOverlay);
+
+            VerticalLayout bottomBox = new VerticalLayout(main.getWidth(), 50);
+            bottomBox.setAlignment(Layout.Alignment.TOP_CENTER);
+            main.addElement(bottomBox);
+
+            TextFlowOverlay text = new TextFlowOverlay(dialogue, 500);
+            text.setTextColor(RenJava.CONFIGURATION.getDialogueColor());
+            bottomBox.addElement(text);
+
         }
 
-        // Call SceneBuild event.
-        SceneBuildEvent event = new SceneBuildEvent(this, container);
-        RenJava.getEventHandler().callEvent(event);
+        // Bottom menu
+        container.addElement(buildQuickMenu(width, height, scale));
+
+        // Update/Inputs
+        setContainer(container);
+        handleInput();
 
         return container;
     }
 
+    private HorizontalLayout buildQuickMenu(double width, double height, double scale) {
+        double menuH = 30 * scale;
+        HorizontalLayout quickMenu = new HorizontalLayout(0, height - menuH, width, menuH);
+        quickMenu.setAlignment(Layout.Alignment.CENTER);
+        quickMenu.setSpacing((float) (15 * scale));
+
+        for (String label : List.of("Back", "History", "Skip", "Auto", "Save", "Q.Save", "Q.Load", "Prefs")) {
+            ButtonOverlay button = new ButtonOverlay(label, (float) (21 * scale), Color.WHITE, 70 * scale, menuH);
+            button.getStyling().setBackgroundColor(Color.TRANSPARENT);
+            button.getStyling().setHoverColor(Color.TRANSPARENT);
+            button.getStyling().setBorderThickness(0f);
+            button.setTextColor(new Color(0.8f, 0.8f, 0.8f, 1f));
+            button.getStyling().setTextHoverColor(Color.WHITE);
+            button.onAction(() -> { /* hook into RenJava's action for this label */ });
+            quickMenu.addElement(button);
+        }
+        return quickMenu;
+    }
     @Override
     public StageType getStageType() {
         return StageType.IMAGE_SCENE;

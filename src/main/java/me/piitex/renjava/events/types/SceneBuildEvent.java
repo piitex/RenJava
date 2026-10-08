@@ -1,19 +1,19 @@
 package me.piitex.renjava.events.types;
 
-import me.piitex.renjava.api.scenes.RenScene;
+import me.piitex.engine.ui.containers.Container;
+import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.Event;
-import me.piitex.renjava.gui.Container;
 
 public class SceneBuildEvent extends Event {
-    private final RenScene scene;
+    private final Scene scene;
     private final Container container;
 
-    public SceneBuildEvent(RenScene scene, Container container) {
+    public SceneBuildEvent(Scene scene, Container container) {
         this.scene = scene;
         this.container = container;
     }
 
-    public RenScene getScene() {
+    public Scene getScene() {
         return scene;
     }
 

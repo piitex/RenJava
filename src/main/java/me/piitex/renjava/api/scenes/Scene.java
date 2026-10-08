@@ -3,6 +3,7 @@ package me.piitex.renjava.api.scenes;
 import me.piitex.engine.Window;
 import me.piitex.engine.ui.animation.Transition;
 import me.piitex.engine.ui.containers.Container;
+import me.piitex.engine.utils.flags.Nullable;
 import me.piitex.renjava.api.stories.Story;
 import me.piitex.renjava.events.types.SceneBuildEvent;
 import me.piitex.renjava.events.types.SceneEndEvent;
@@ -13,7 +14,7 @@ import java.util.function.Consumer;
 
 public abstract class Scene {
     private final String id;
-    private Container container;
+    @Nullable private Container container;
     private Story story;
     private int index;
     private Transition startTransition;
@@ -90,6 +91,11 @@ public abstract class Scene {
 
     protected void setContainer(Container container) {
         this.container = container;
+    }
+
+    @Nullable
+    public Container getContainer() {
+        return container;
     }
 
     public abstract Container build();

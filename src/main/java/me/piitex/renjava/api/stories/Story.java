@@ -1,6 +1,7 @@
 package me.piitex.renjava.api.stories;
 
 import me.piitex.engine.Window;
+import me.piitex.engine.ui.animation.Transition;
 import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.scenes.Scene;
 import me.piitex.renjava.events.types.SceneStartEvent;
@@ -82,6 +83,12 @@ public abstract class Story {
         RenJava.PLAYER.setCurrentStory(this.getId());
 
         refresh();
+        StoryStartEvent storyStartEvent = new StoryStartEvent(this);
+        if (getStartEventConsumer() != null) {
+            getStartEventConsumer().accept(storyStartEvent);
+            RenJava.getEventHandler().callEvent(storyStartEvent);
+        }
+
 
         Scene scene = getScene(0); // Gets the first scene index.
 
@@ -274,10 +281,10 @@ public abstract class Story {
         scene.render(window, true, events);
 
         // Next play the transition after the scene is set and rendered. (Should be fast enough to not flicker, depends on hardware.)
-//        Transition startTransition = scene.getStartTransition();
-//        if (startTransition != null && !startTransition.isPlaying()) {
-//            window.handleSceneTransition(scene, startTransition);
-//        }
+        Transition transition = scene.getStartTransition();
+        if (transition != null && !transition.isFinished()) {
+            scene.getContainer().playTransition(transition);
+        }
 
         RenJava.PLAYER.setCurrentStageType(scene.getStageType());
         if (!rollback) {

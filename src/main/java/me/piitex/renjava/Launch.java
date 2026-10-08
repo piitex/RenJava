@@ -13,6 +13,7 @@ import me.piitex.engine.Engine;
 import me.piitex.engine.Window;
 import me.piitex.engine.WindowOptions;
 import me.piitex.engine.io.AppEnvironment;
+import me.piitex.engine.ui.animation.FadeTransition;
 import me.piitex.engine.ui.color.Color;
 import me.piitex.engine.ui.color.RainbowColor;
 import me.piitex.engine.ui.image.ImageLoader;
@@ -33,7 +34,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
-import java.util.Set;
+
 import java.util.stream.Collectors;
 
 public class Launch {
@@ -198,25 +199,6 @@ public class Launch {
         new Engine().start(window);
     }
 
-//    @Override
-//    public void start(Stage stage) {
-//        // When launched, load the gui stuff.
-//        new GuiLoader(stage, RenJava.getInstance(), getHostServices());
-//
-//        long end = System.currentTimeMillis();
-//        long time = end - start;
-//        DateFormat format = new SimpleDateFormat("ss.SS");
-//
-//        String s = format.format(time);
-//        // I hate that it displays the leading 0: 01.26s
-//        // Fix
-//        if (s.startsWith("0")) {
-//            s = s.replaceFirst("0", "");
-//        }
-//
-//        RenJava.getInstance().getLogger().info("Loaded in " + s + "s");
-//    }
-
     /**
      * This is just a default execute for testing purposes only.
      */
@@ -261,7 +243,9 @@ public class Launch {
                 @Override
                 public void init() {
                     ImageOverlay background = new ImageOverlay(new File(getImagesDirectory(), "image.png"));
-                    addScene(new ImageScene("test", background, getCharacter("ren"), "Some text."));
+                    ImageScene imageScene = new ImageScene("test", background, getCharacter("ren"), "Some text.");
+                    imageScene.setStartTransition(new FadeTransition(3f, FadeTransition.Direction.IN));
+                    addScene(imageScene);
                 }
             };
             story.start();

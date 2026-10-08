@@ -243,9 +243,15 @@ public class Launch {
                 @Override
                 public void init() {
                     ImageOverlay background = new ImageOverlay(new File(getImagesDirectory(), "image.png"));
-                    ImageScene imageScene = new ImageScene("test", background, getCharacter("ren"), "Some text.");
-                    imageScene.setStartTransition(new FadeTransition(3f, FadeTransition.Direction.IN));
-                    addScene(imageScene);
+
+                    ImageScene first = new ImageScene("1", background, getCharacter("ren"), "Some text.");
+                    first.setStartTransition(new FadeTransition(3f, FadeTransition.Direction.IN));
+                    first.setEndTransition(new FadeTransition(3f, FadeTransition.Direction.OUT));
+                    addScene(first);
+
+                    ImageScene second = new ImageScene("2", background, getCharacter("ren"), "Even more text.");
+                    second.setStartTransition(new FadeTransition(3f, FadeTransition.Direction.IN));
+                    addScene(second);
                 }
             };
             story.start();

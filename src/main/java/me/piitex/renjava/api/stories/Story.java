@@ -1,6 +1,7 @@
 package me.piitex.renjava.api.stories;
 
 import me.piitex.engine.Window;
+import me.piitex.engine.ui.animation.LockableTransition;
 import me.piitex.engine.ui.animation.Transition;
 import me.piitex.renjava.RenJava;
 import me.piitex.renjava.api.scenes.Scene;
@@ -10,8 +11,6 @@ import me.piitex.renjava.events.types.StoryStartEvent;
 import me.piitex.renjava.loggers.RenLogger;
 import org.slf4j.Logger;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -131,6 +130,11 @@ public abstract class Story {
         int index = sceneIndexMap.size();
         sceneIndexMap.put(index, scene);
         scene.setIndex(index);
+
+        // Hook events
+        if (scene.getContainer() != null) {
+
+        }
     }
 
     /**
@@ -186,6 +190,7 @@ public abstract class Story {
     public Scene getNextScene(String id) {
         Scene scene = scenes.get(id);
         if (scene == null) {
+            RenJava.getInstance().getLogger().warn("Scene is null.");
             return null;
         }
         int index = scene.getIndex() + 1;
@@ -197,9 +202,12 @@ public abstract class Story {
      * @return Returns the next {@link Scene} or null.
      */
     public Scene getNextSceneFromCurrent() {
-        if (RenJava.PLAYER.getCurrentScene() != null) {
+        System.out.println("Fetching next scene from current...");
+        if (getCurrentScene() != null) {
+            System.out.println("Player current scene is set.");
             return getNextScene(RenJava.PLAYER.getCurrentScene().getId());
         }
+        System.out.println("Scene is null...");
         return null;
     }
 
@@ -275,27 +283,39 @@ public abstract class Story {
      * @param events If the scene events should be called.
      */
     public void displayScene(Scene scene, boolean rollback, boolean events) {
-        long estTime = System.currentTimeMillis();
         Window window = RenJava.getInstance().getGameWindow();
 
-        scene.render(window, true, events);
+        Runnable show = () -> {
+            RenJava.PLAYER.updateScene(scene, rollback);
+            scene.render(window, true, events);
 
-        // Next play the transition after the scene is set and rendered. (Should be fast enough to not flicker, depends on hardware.)
-        Transition transition = scene.getStartTransition();
-        if (transition != null && !transition.isFinished()) {
-            scene.getContainer().playTransition(transition);
+            Transition start = scene.getStartTransition();
+            if (start != null && !start.isFinished()) {
+                if (start instanceof LockableTransition<?> lockable) {
+                    lockable.skippable(true);
+                    lockable.lock();
+                }
+                scene.getContainer().playTransition(start);
+            }
+
+            RenJava.PLAYER.setCurrentStageType(scene.getStageType());
+            if (!rollback) {
+                RenJava.PLAYER.getViewedScenes().put(RenJava.PLAYER.getViewedScenes().size() + 1, Map.entry(scene.getId(), this.getId()));
+                RenJava.PLAYER.getRolledScenes().put(RenJava.PLAYER.getRolledScenes().size() + 1, Map.entry(scene.getId(), this.getId()));
+            }
+        };
+
+        Scene current = getCurrentScene();
+        Transition end = current == null ? null : current.getEndTransition();
+        if (current != null && current.getContainer() != null && end != null && !end.isFinished()) {
+            if (end instanceof LockableTransition<?> lockable) {
+                lockable.skippable(true);
+                lockable.lock();
+            }
+            current.getContainer().playTransition(end, show);
+        } else {
+            show.run();
         }
-
-        RenJava.PLAYER.setCurrentStageType(scene.getStageType());
-        if (!rollback) {
-            // 0,1,2,3,
-            RenJava.PLAYER.getViewedScenes().put(RenJava.PLAYER.getViewedScenes().size() + 1, Map.entry(scene.getId(), this.getId()));
-            RenJava.PLAYER.getRolledScenes().put(RenJava.PLAYER.getRolledScenes().size() + 1, Map.entry(scene.getId(), this.getId()));
-        }
-
-        long endTime = System.currentTimeMillis() - estTime;
-        DateFormat format = new SimpleDateFormat("SSSS");
-        RenLogger.LOGGER.debug("Rendered scene '{}' in {}ms", scene.getId(), format.format(endTime).replaceFirst("^0*", ""));
     }
 
     /**
@@ -303,7 +323,12 @@ public abstract class Story {
      */
     public void displayNextScene() {
         Scene scene = getNextSceneFromCurrent();
-        displayScene(scene);
+        if (scene != null) {
+            System.out.println("Scene found, displaying...");
+            displayScene(scene);
+        } else {
+            RenJava.getInstance().getLogger().warn("Next scene is null.");
+        }
     }
 
     public LinkedHashMap<String, Scene> getScenes() {

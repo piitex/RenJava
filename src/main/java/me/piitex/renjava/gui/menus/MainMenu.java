@@ -2,7 +2,7 @@ package me.piitex.renjava.gui.menus;
 
 import me.piitex.engine.Window;
 import me.piitex.engine.ui.containers.Container;
-import me.piitex.engine.ui.overlays.ButtonOverlay;
+import me.piitex.engine.ui.overlays.ImageOverlay;
 import me.piitex.renjava.api.saves.Save;
 
 public interface MainMenu {
@@ -41,11 +41,11 @@ public interface MainMenu {
 
     Container sideMenu(boolean rightClick);
 
-    Container loadMenu(boolean rightClick, int page, boolean loadMenu);
+    Container loadMenu(boolean rightClick, int page);
 
     Container settingMenu(boolean rightClick);
 
     Container aboutMenu(boolean rightClick);
 
-    ButtonOverlay savePreview(Save save, int page, int index);
+    ImageOverlay savePreview(Save save, int page, int slot);
 }

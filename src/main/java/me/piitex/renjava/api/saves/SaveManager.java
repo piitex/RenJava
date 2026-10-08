@@ -103,7 +103,7 @@ public class SaveManager {
                     if (mapSection != null) {
                         mapSection.addKeyValue(key.trim(), value.trim());
                     }
-                } else if (key.startsWith("\t") || key.startsWith("    ")){
+                } else if (key.startsWith("\t") || key.startsWith("    ")) {
                     if (value.contains(",") || value.contains("[")) {
                         if (value.contains("[")) {
                             value = value.replace("[", "").replace("]", "");
@@ -127,11 +127,11 @@ public class SaveManager {
         RenLogger.LOGGER.info("Loaded save '{}", save.getName());
 
         // Re-encrypt the save if necessary
-        Tasks.runRendererThread(() -> {
-            // Necessary to run on JavaFX to prevent rendering issues.
-            if (RenJava.CONFIGURATION.isEncryptSaves())
-                save.encrypt();
-        });
+
+        // Necessary to run on JavaFX to prevent rendering issues.
+        if (RenJava.CONFIGURATION.isEncryptSaves())
+            save.encrypt();
+
     }
 
 

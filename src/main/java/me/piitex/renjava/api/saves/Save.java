@@ -122,7 +122,7 @@ public class Save {
     }
 
 
-    public ImageOverlay buildPreview(int page) {
+    public ImageOverlay buildPreview() {
         if (!file.exists()) {
             return null;
         }
@@ -137,9 +137,6 @@ public class Save {
         }
 
         Story story = RenJava.PLAYER.getStory((String) o);
-
-        // FIXME: This will produce a lot of programming debt. This is an extremely cheap unoptimized hack.
-        // Set the player to the current story (which is off to a horrible start)
         RenJava.PLAYER.setCurrentStory(story.getId());
 
         // Initialize the story to process the scenes. (Used to execute the `addScene` functions which maps the scenes to the story.)
